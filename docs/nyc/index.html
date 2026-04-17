@@ -21,6 +21,10 @@
         box-sizing: border-box;
       }
 
+      [hidden] {
+        display: none !important;
+      }
+
       body {
         margin: 0;
         background: var(--background);
@@ -99,6 +103,31 @@
         outline-offset: 3px;
       }
 
+      /* ── Principle 1: Mitigating Latency — loading spinner ── */
+      #loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 20px;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .spinner {
+        width: 38px;
+        height: 38px;
+        border: 3px solid #e5e7eb;
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
       /* Daily fact */
       .daily-fact {
         margin: 26px 0 18px;
@@ -125,12 +154,47 @@
 
       /* Topline */
       .topline {
-        margin: 20px 0 30px;
+        margin: 20px 0 24px;
         padding: 16px;
         background: #f8f9fa;
         border-left: 3px solid var(--accent);
         font-size: 16px;
         line-height: 1.5;
+      }
+
+      /* ── Principle 3: Optionality — category filter pills ── */
+      .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .filter-pill {
+        padding: 5px 14px;
+        border: 1px solid var(--border);
+        background: var(--background);
+        color: var(--foreground);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.12s, color 0.12s;
+        font-family: inherit;
+      }
+
+      .filter-pill:hover {
+        background: #f0f0f0;
+      }
+
+      .filter-pill.active {
+        background: var(--foreground);
+        color: var(--background);
+      }
+
+      .filter-pill:focus-visible {
+        outline: 2px solid var(--accent2);
+        outline-offset: 3px;
       }
 
       /* Section grid */
@@ -147,6 +211,11 @@
         padding: 20px;
         border: 1px solid var(--border);
         background: var(--background);
+        transition: opacity 0.15s;
+      }
+
+      .featured-card.hidden-by-filter {
+        display: none;
       }
 
       .featured-card h3 {
@@ -164,6 +233,10 @@
       .featured-list {
         margin: 0;
         padding-left: 20px;
+      }
+
+      .featured-list li {
+        margin-bottom: 0;
       }
 
       .featured-list li + li {
@@ -205,6 +278,188 @@
 
       .muted {
         color: var(--muted);
+      }
+
+      /* ── Principle 2: Capture User Feedback — thumbs up/down ── */
+      .feedback-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 7px;
+      }
+
+      .feedback-label {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-right: 2px;
+      }
+
+      .fb-btn {
+        border: 1px solid #d5d7da;
+        background: none;
+        padding: 2px 9px;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.4;
+        cursor: pointer;
+        border-radius: 4px;
+        opacity: 0.5;
+        transition: opacity 0.12s, background 0.12s, border-color 0.12s;
+        font-family: inherit;
+      }
+
+      .fb-btn[data-val="up"] {
+        color: #16a34a;
+      }
+
+      .fb-btn[data-val="down"] {
+        color: #dc2626;
+      }
+
+      .fb-btn:hover {
+        opacity: 1;
+        background: #f5f5f5;
+      }
+
+      .fb-btn:focus-visible {
+        outline: 2px solid var(--accent2);
+        outline-offset: 2px;
+      }
+
+      .fb-btn.selected-up {
+        background: #dcfce7;
+        border-color: #16a34a;
+        opacity: 1;
+      }
+
+      .fb-btn.selected-down {
+        background: #fee2e2;
+        border-color: #dc2626;
+        opacity: 1;
+      }
+
+      /* Toast notification */
+      #toast {
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%) translateY(10px);
+        background: #111111;
+        color: #ffffff;
+        padding: 10px 22px;
+        border-radius: 6px;
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+        pointer-events: none;
+        z-index: 200;
+        white-space: nowrap;
+      }
+
+      #toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* ── Wrong section flagging — Optionality + Ground Truth Labels ── */
+      .flag-wrap {
+        position: relative;
+        display: inline-block;
+        margin-top: 6px;
+      }
+
+      .flag-trigger {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 11px;
+        color: var(--muted);
+        cursor: pointer;
+        font-family: inherit;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .flag-trigger:hover {
+        color: var(--foreground);
+      }
+
+      .flag-trigger:focus-visible {
+        outline: 2px solid var(--accent2);
+        outline-offset: 2px;
+      }
+
+      .flag-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        background: var(--background);
+        border: 1px solid var(--border);
+        padding: 10px;
+        z-index: 50;
+        min-width: 190px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      }
+
+      .flag-wrap.open .flag-dropdown {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .flag-dropdown-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        padding: 0 4px 6px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+      }
+
+      .flag-option {
+        background: none;
+        border: none;
+        padding: 5px 6px;
+        font-size: 13px;
+        text-align: left;
+        cursor: pointer;
+        font-family: inherit;
+        border-radius: 3px;
+        transition: background 0.1s;
+        width: 100%;
+      }
+
+      .flag-option:hover {
+        background: #f5f5f5;
+      }
+
+      .flag-option:focus-visible {
+        outline: 2px solid var(--accent2);
+        outline-offset: 1px;
+      }
+
+      .flag-applied {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+
+      .flag-applied-badge {
+        background: #f5f5f5;
+        border: 1px solid #d5d7da;
+        border-radius: 3px;
+        padding: 1px 6px;
+        font-size: 11px;
+        color: var(--foreground);
       }
 
       /* Footer */
@@ -265,13 +520,23 @@
         </nav>
       </header>
 
-      <main>
+      <!-- Principle 1: loading state shown while digest fetches -->
+      <div id="loading" aria-live="polite" aria-label="Loading digest">
+        <div class="spinner" role="status"></div>
+        <span>Loading today's digest…</span>
+      </div>
+
+      <!-- Main content hidden until data arrives -->
+      <main id="content" hidden>
         <p class="daily-fact" id="daily-fact">
           <strong>Daily Fact:</strong>
-          <span id="daily-fact-content">Loading…</span>
+          <span id="daily-fact-content"></span>
         </p>
 
-        <section class="topline" id="topline">Loading today's brief…</section>
+        <section class="topline" id="topline"></section>
+
+        <!-- Principle 3: filter pills let users focus on specific categories -->
+        <div class="filter-bar" id="filter-bar" role="group" aria-label="Filter stories by section"></div>
 
         <section class="featured-grid" id="sections-grid" aria-label="Today's civic updates"></section>
       </main>
@@ -281,18 +546,72 @@
       </footer>
     </div>
 
+    <!-- Principle 2: toast acknowledges user feedback -->
+    <div id="toast" role="status" aria-live="polite"></div>
+
     <script>
       "use strict";
 
       const DIGEST_PATH = "civicpulse_digest_New_York_NY.json";
+      const FEEDBACK_KEY = "civicpulse_feedback";
+      const CORRECTIONS_KEY = "civicpulse_corrections";
+
+      const SECTION_LABELS = {
+        risks_alerts: "Risks & Alerts",
+        civics_politics: "Civics & Politics",
+        opportunities_welfare: "Opportunities & Welfare",
+        community: "Community",
+        not_local: "Not local news",
+      };
 
       const elements = {
+        loading: document.getElementById("loading"),
+        content: document.getElementById("content"),
         place: document.getElementById("place"),
         updated: document.getElementById("updated"),
         dailyFact: document.getElementById("daily-fact-content"),
         topline: document.getElementById("topline"),
+        filterBar: document.getElementById("filter-bar"),
         sectionsGrid: document.getElementById("sections-grid"),
+        toast: document.getElementById("toast"),
       };
+
+      // ── Feedback helpers (localStorage) ──────────────────────────
+
+      function loadFeedback() {
+        try { return JSON.parse(localStorage.getItem(FEEDBACK_KEY) || "{}"); }
+        catch { return {}; }
+      }
+
+      function saveFeedback(data) {
+        try { localStorage.setItem(FEEDBACK_KEY, JSON.stringify(data)); } catch {}
+      }
+
+      function loadCorrections() {
+        try { return JSON.parse(localStorage.getItem(CORRECTIONS_KEY) || "{}"); }
+        catch { return {}; }
+      }
+
+      function saveCorrections(data) {
+        try { localStorage.setItem(CORRECTIONS_KEY, JSON.stringify(data)); } catch {}
+      }
+
+      function storyId(title) {
+        return (title || "").trim().toLowerCase().replace(/\s+/g, "_").slice(0, 80);
+      }
+
+      // ── Toast helper ──────────────────────────────────────────────
+
+      let toastTimer = null;
+
+      function showToast(msg) {
+        clearTimeout(toastTimer);
+        elements.toast.textContent = msg;
+        elements.toast.classList.add("show");
+        toastTimer = setTimeout(() => elements.toast.classList.remove("show"), 2200);
+      }
+
+      // ── Date helpers ──────────────────────────────────────────────
 
       function parseDate(value) {
         if (!value) return null;
@@ -314,18 +633,22 @@
         return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
       }
 
+      // ── Section rendering ─────────────────────────────────────────
+
       const PINNED_SECTIONS = {
         risks_alerts: { label: "Risks & Alerts", empty: "No active alerts right now." },
       };
 
-      function renderSectionCard(sectionKey, section, emptyMessage = null) {
+      function renderSectionCard(sectionKey, section, emptyMessage) {
         if (!section) return null;
-
         const hasItems = Array.isArray(section.items) && section.items.length > 0;
         if (!hasItems && !emptyMessage) return null;
 
+        const feedback = loadFeedback();
+
         const card = document.createElement("article");
         card.className = "featured-card";
+        card.dataset.sectionKey = sectionKey;
 
         const heading = document.createElement("h3");
         heading.textContent = section.title || sectionKey;
@@ -346,6 +669,7 @@
 
           section.items.forEach(story => {
             const li = document.createElement("li");
+            const sid = storyId(story.title);
 
             const link = document.createElement("a");
             link.href = story.link;
@@ -373,7 +697,129 @@
             sourceSpan.textContent = story.source || "";
             meta.append(sourceSpan);
 
-            li.append(link, why, meta);
+            // ── Principle 2: thumbs up/down feedback buttons ──
+            const fbRow = document.createElement("span");
+            fbRow.className = "feedback-row";
+
+            const fbLabel = document.createElement("span");
+            fbLabel.className = "feedback-label";
+            fbLabel.textContent = "Relevant?";
+
+            const btnUp = document.createElement("button");
+            btnUp.className = "fb-btn";
+            btnUp.dataset.sid = sid;
+            btnUp.dataset.val = "up";
+            btnUp.title = "Relevant";
+            btnUp.textContent = "▲";
+
+            const btnDown = document.createElement("button");
+            btnDown.className = "fb-btn";
+            btnDown.dataset.sid = sid;
+            btnDown.dataset.val = "down";
+            btnDown.title = "Not relevant";
+            btnDown.textContent = "▼";
+
+            // Restore saved state
+            const saved = feedback[sid];
+            if (saved === "up") btnUp.classList.add("selected-up");
+            if (saved === "down") btnDown.classList.add("selected-down");
+
+            function handleFeedback(btn, val, otherBtn, otherClass, selectedClass) {
+              const fb = loadFeedback();
+              if (fb[sid] === val) {
+                // toggle off
+                delete fb[sid];
+                btn.classList.remove(selectedClass);
+              } else {
+                fb[sid] = val;
+                fb[`${sid}__category`] = sectionKey;
+                fb[`${sid}__title`] = story.title;
+                fb[`${sid}__ts`] = new Date().toISOString();
+                btn.classList.add(selectedClass);
+                otherBtn.classList.remove(otherClass);
+              }
+              saveFeedback(fb);
+              showToast(val === "up" ? "Marked as relevant ✓" : "Marked as not relevant ✓");
+            }
+
+            btnUp.addEventListener("click", () =>
+              handleFeedback(btnUp, "up", btnDown, "selected-down", "selected-up"));
+            btnDown.addEventListener("click", () =>
+              handleFeedback(btnDown, "down", btnUp, "selected-up", "selected-down"));
+
+            fbRow.append(fbLabel, btnUp, btnDown);
+
+            // ── Wrong section flagging ──
+            const corrections = loadCorrections();
+            const savedCorrection = corrections[sid];
+            const flagWrap = document.createElement("div");
+            flagWrap.className = "flag-wrap";
+
+            if (savedCorrection) {
+              const applied = document.createElement("span");
+              applied.className = "flag-applied";
+              applied.textContent = "Flagged → ";
+              const badge = document.createElement("span");
+              badge.className = "flag-applied-badge";
+              badge.textContent = savedCorrection.correctSectionLabel;
+              applied.append(badge);
+              flagWrap.append(applied);
+            } else {
+              const trigger = document.createElement("button");
+              trigger.className = "flag-trigger";
+              trigger.textContent = "Wrong section?";
+              trigger.addEventListener("click", e => {
+                e.stopPropagation();
+                document.querySelectorAll(".flag-wrap.open").forEach(w => {
+                  if (w !== flagWrap) w.classList.remove("open");
+                });
+                flagWrap.classList.toggle("open");
+              });
+
+              const dropdown = document.createElement("div");
+              dropdown.className = "flag-dropdown";
+              dropdown.addEventListener("click", e => e.stopPropagation());
+
+              const dropLabel = document.createElement("div");
+              dropLabel.className = "flag-dropdown-label";
+              dropLabel.textContent = "Move to section:";
+              dropdown.append(dropLabel);
+
+              Object.entries(SECTION_LABELS)
+                .filter(([key]) => key !== sectionKey)
+                .forEach(([key, label]) => {
+                  const btn = document.createElement("button");
+                  btn.className = "flag-option";
+                  btn.textContent = label;
+                  btn.addEventListener("click", () => {
+                    const c = loadCorrections();
+                    c[sid] = {
+                      correctSection: key,
+                      correctSectionLabel: label,
+                      originalSection: sectionKey,
+                      title: story.title,
+                      timestamp: new Date().toISOString(),
+                    };
+                    saveCorrections(c);
+                    flagWrap.classList.remove("open");
+                    flagWrap.innerHTML = "";
+                    const applied = document.createElement("span");
+                    applied.className = "flag-applied";
+                    applied.textContent = "Flagged → ";
+                    const badge = document.createElement("span");
+                    badge.className = "flag-applied-badge";
+                    badge.textContent = label;
+                    applied.append(badge);
+                    flagWrap.append(applied);
+                    showToast("Thanks — correction saved!");
+                  });
+                  dropdown.append(btn);
+                });
+
+              flagWrap.append(trigger, dropdown);
+            }
+
+            li.append(link, why, meta, fbRow, flagWrap);
             ol.append(li);
           });
 
@@ -384,17 +830,69 @@
         return card;
       }
 
+      // ── Principle 3: filter pill logic ────────────────────────────
+
+      let activeFilter = "all";
+
+      function buildFilterPills(sections, order) {
+        elements.filterBar.replaceChildren();
+
+        const allBtn = document.createElement("button");
+        allBtn.className = "filter-pill active";
+        allBtn.dataset.filter = "all";
+        allBtn.textContent = "All";
+        elements.filterBar.append(allBtn);
+
+        const keys = (order || Object.keys(sections)).filter(k => k !== "nonlocal" && k !== "other");
+        keys.forEach(key => {
+          const sec = sections[key];
+          if (!sec) return;
+          const btn = document.createElement("button");
+          btn.className = "filter-pill";
+          btn.dataset.filter = key;
+          btn.textContent = sec.title || key;
+          elements.filterBar.append(btn);
+        });
+
+        // Also add pinned sections not in order
+        Object.entries(PINNED_SECTIONS).forEach(([key, cfg]) => {
+          if (!keys.includes(key) && !elements.filterBar.querySelector(`[data-filter="${key}"]`)) {
+            const btn = document.createElement("button");
+            btn.className = "filter-pill";
+            btn.dataset.filter = key;
+            btn.textContent = cfg.label;
+            elements.filterBar.append(btn);
+          }
+        });
+
+        elements.filterBar.addEventListener("click", e => {
+          const pill = e.target.closest(".filter-pill");
+          if (!pill) return;
+          activeFilter = pill.dataset.filter;
+          elements.filterBar.querySelectorAll(".filter-pill").forEach(p =>
+            p.classList.toggle("active", p === pill));
+          applyFilter();
+        });
+      }
+
+      function applyFilter() {
+        elements.sectionsGrid.querySelectorAll(".featured-card").forEach(card => {
+          const match = activeFilter === "all" || card.dataset.sectionKey === activeFilter;
+          card.classList.toggle("hidden-by-filter", !match);
+        });
+      }
+
+      // ── Main render ───────────────────────────────────────────────
+
       function renderSections(sections, order) {
         elements.sectionsGrid.replaceChildren();
 
-        // Always render pinned sections first
         Object.entries(PINNED_SECTIONS).forEach(([key, config]) => {
           const section = sections[key] || { title: config.label, items: [] };
           const card = renderSectionCard(key, section, config.empty);
           if (card) elements.sectionsGrid.append(card);
         });
 
-        // Then render the rest in order, skipping pinned ones
         const pinned = Object.keys(PINNED_SECTIONS);
         const keys = (order || Object.keys(sections)).filter(k => !pinned.includes(k));
         keys.forEach(key => {
@@ -402,6 +900,8 @@
           if (card) elements.sectionsGrid.append(card);
         });
       }
+
+      // ── Data loading ──────────────────────────────────────────────
 
       async function loadDigest() {
         const response = await fetch(DIGEST_PATH);
@@ -412,16 +912,32 @@
       async function initialisePage() {
         try {
           const data = await loadDigest();
+
           elements.place.textContent = data.place || "New York NY";
           elements.updated.textContent = formatGeneratedAt(data.generated_at_utc);
           elements.dailyFact.textContent = data.daily_fact || "";
           elements.topline.textContent = data.topline_md || "";
-          renderSections(data.sections || {}, data.order || null);
+
+          const sections = data.sections || {};
+          const order = data.order || null;
+
+          renderSections(sections, order);
+          buildFilterPills(sections, order);
+
+          // Principle 1: swap loading → content
+          elements.loading.hidden = true;
+          elements.content.hidden = false;
         } catch (error) {
           console.error("Failed to load data:", error);
-          elements.sectionsGrid.innerHTML = "<p>Failed to load data. Please try again later.</p>";
+          elements.loading.hidden = true;
+          elements.content.hidden = false;
+          elements.sectionsGrid.innerHTML = "<p>Failed to load today's digest. Please try again later.</p>";
         }
       }
+
+      document.addEventListener("click", () => {
+        document.querySelectorAll(".flag-wrap.open").forEach(w => w.classList.remove("open"));
+      });
 
       initialisePage();
     </script>
