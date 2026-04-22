@@ -803,21 +803,21 @@
 
             const fbLabel = document.createElement("span");
             fbLabel.className = "feedback-label";
-            fbLabel.textContent = "Relevant?";
-            fbLabel.title = "Your votes create ground-truth labels that help retrain the model";
+            fbLabel.textContent = "NYC news?";
+            fbLabel.title = "Is this genuinely local New York City news?";
 
             const btnUp = document.createElement("button");
             btnUp.className = "fb-btn";
             btnUp.dataset.sid = sid;
             btnUp.dataset.val = "up";
-            btnUp.title = "Relevant";
+            btnUp.title = "Yes, this is NYC news";
             btnUp.textContent = "▲";
 
             const btnDown = document.createElement("button");
             btnDown.className = "fb-btn";
             btnDown.dataset.sid = sid;
             btnDown.dataset.val = "down";
-            btnDown.title = "Not relevant";
+            btnDown.title = "No, this isn't NYC news";
             btnDown.textContent = "▼";
 
             // Restore saved state
@@ -840,7 +840,7 @@
                 otherBtn.classList.remove(otherClass);
               }
               saveFeedback(fb);
-              showToast(val === "up" ? "Marked as relevant ✓" : "Marked as not relevant ✓");
+              showToast(val === "up" ? "Flagged as NYC news ✓" : "Flagged as not NYC news ✓");
             }
 
             btnUp.addEventListener("click", () =>
