@@ -128,23 +128,6 @@
         to { transform: rotate(360deg); }
       }
 
-      #loading-msg {
-        transition: opacity 0.3s ease;
-      }
-
-      #loading-msg.fade {
-        opacity: 0;
-      }
-
-      /* ── Staggered card reveal animation ── */
-      @keyframes fadeSlideIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-
-      .featured-card {
-        animation: fadeSlideIn 0.35s ease both;
-      }
 
       /* Daily fact */
       .daily-fact {
@@ -613,7 +596,7 @@
       <!-- Principle 1: loading state shown while digest fetches -->
       <div id="loading" aria-live="polite" aria-label="Loading digest">
         <div class="spinner" role="status"></div>
-        <span id="loading-msg">Loading today's digest…</span>
+        <span>Loading today's digest…</span>
       </div>
 
       <!-- Main content hidden until data arrives -->
@@ -654,40 +637,13 @@
         not_local: "Not local news",
       };
 
-      // ── Explainability (Generic): how the model classifies each section ──
+      // ── Explainability (Generic): actual criteria from update.py ──
       const SECTION_DESCRIPTIONS = {
-        risks_alerts: "The model flags stories here when it detects safety hazards, service disruptions, weather advisories, or public health concerns — scored above its urgency threshold.",
-        civics_politics: "Stories are placed here when the model finds local government activity, policy changes, elected officials, or civic participation — scored above 0.5 on a local relevance scale.",
-        opportunities_welfare: "The model routes stories here when it identifies job openings, financial benefits, grants, housing assistance, or social services available to New Yorkers.",
-        community: "Stories land here when the model detects neighborhood events, local culture, community organizations, or development projects affecting New York City residents.",
+        risks_alerts: "Only immediate ongoing threats: active emergencies, evacuation orders, major infrastructure failures, or severe weather. Stories must score ≥ 0.5 on the model's importance scale to appear here.",
+        civics_politics: "Government, city council, courts, budgets, elections, policy, union negotiations, and crime investigations. Stories must score ≥ 0.5 on the model's importance scale.",
+        opportunities_welfare: "Jobs, training programs, healthcare services, social programs, benefits, and community resources. Stories must score ≥ 0.4 on the model's importance scale.",
+        community: "Local events, culture, arts, entertainment, sports, and neighborhood human-interest news. Stories must score ≥ 0.4 on the model's importance scale.",
       };
-
-      // ── Mitigating Latency: rotating loading messages ──
-      const LOADING_MESSAGES = [
-        "Loading today's digest…",
-        "Scanning local news sources…",
-        "Classifying stories into sections…",
-        "Ranking by local relevance…",
-        "Almost ready…",
-      ];
-      let loadingMsgIdx = 0;
-      let loadingMsgTimer = null;
-
-      function startLoadingMessages() {
-        const el = document.getElementById("loading-msg");
-        loadingMsgTimer = setInterval(() => {
-          el.classList.add("fade");
-          setTimeout(() => {
-            loadingMsgIdx = (loadingMsgIdx + 1) % LOADING_MESSAGES.length;
-            el.textContent = LOADING_MESSAGES[loadingMsgIdx];
-            el.classList.remove("fade");
-          }, 300);
-        }, 1800);
-      }
-
-      function stopLoadingMessages() {
-        clearInterval(loadingMsgTimer);
-      }
 
       const elements = {
         loading: document.getElementById("loading"),
@@ -1044,13 +1000,9 @@
 
       function renderSections(sections, order) {
         elements.sectionsGrid.replaceChildren();
-        let cardIdx = 0;
 
         function appendCard(card) {
           if (!card) return;
-          // Staggered reveal: each card animates in slightly after the previous
-          card.style.animationDelay = `${cardIdx * 0.08}s`;
-          cardIdx++;
           elements.sectionsGrid.append(card);
         }
 
@@ -1073,10 +1025,8 @@
       }
 
       async function initialisePage() {
-        startLoadingMessages();
         try {
           const data = await loadDigest();
-          stopLoadingMessages();
 
           elements.place.textContent = data.place || "New York NY";
           elements.updated.textContent = formatGeneratedAt(data.generated_at_utc);
@@ -1093,7 +1043,6 @@
           elements.loading.hidden = true;
           elements.content.hidden = false;
         } catch (error) {
-          stopLoadingMessages();
           console.error("Failed to load data:", error);
           elements.loading.hidden = true;
           elements.content.hidden = false;
