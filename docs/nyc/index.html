@@ -103,7 +103,7 @@
         outline-offset: 3px;
       }
 
-      /* ── Principle 1: Mitigating Latency — loading spinner ── */
+      /* ── Principle 1: Mitigating Latency — loading spinner + rotating tips ── */
       #loading {
         display: flex;
         flex-direction: column;
@@ -126,6 +126,24 @@
 
       @keyframes spin {
         to { transform: rotate(360deg); }
+      }
+
+      #loading-msg {
+        transition: opacity 0.3s ease;
+      }
+
+      #loading-msg.fade {
+        opacity: 0;
+      }
+
+      /* ── Staggered card reveal animation ── */
+      @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .featured-card {
+        animation: fadeSlideIn 0.35s ease both;
       }
 
       /* Daily fact */
@@ -259,6 +277,16 @@
         color: var(--foreground);
       }
 
+      /* ── Explainability (Specific): model reasoning label ── */
+      .story-why-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-right: 4px;
+      }
+
       .story-meta {
         display: flex;
         flex-wrap: wrap;
@@ -294,6 +322,7 @@
         letter-spacing: 0.04em;
         text-transform: uppercase;
         margin-right: 2px;
+        cursor: help;
       }
 
       .fb-btn {
@@ -363,7 +392,68 @@
         transform: translateX(-50%) translateY(0);
       }
 
-      /* ── Wrong section flagging — Optionality + Ground Truth Labels ── */
+      /* ── Explainability (Generic): section info button + tooltip ── */
+      .section-heading {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        font-size: 13px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .section-info-btn {
+        flex-shrink: 0;
+        background: none;
+        border: 1px solid #d5d7da;
+        border-radius: 50%;
+        width: 15px;
+        height: 15px;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        font-family: inherit;
+        transition: color 0.1s, border-color 0.1s;
+      }
+
+      .section-info-btn:hover,
+      .section-info-btn[aria-expanded="true"] {
+        color: var(--foreground);
+        border-color: var(--foreground);
+      }
+
+      .section-info-btn:focus-visible {
+        outline: 2px solid var(--accent2);
+        outline-offset: 2px;
+      }
+
+      .section-tooltip {
+        display: none;
+        font-size: 12px;
+        color: var(--muted);
+        background: #f8f9fa;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid var(--accent);
+        padding: 8px 10px;
+        margin-top: 6px;
+        line-height: 1.5;
+        font-weight: 400;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+
+      .section-tooltip.visible {
+        display: block;
+      }
+
+      /* ── Misclassified flagging — Optionality + Ground Truth Labels ── */
       .flag-wrap {
         position: relative;
         display: inline-block;
@@ -523,7 +613,7 @@
       <!-- Principle 1: loading state shown while digest fetches -->
       <div id="loading" aria-live="polite" aria-label="Loading digest">
         <div class="spinner" role="status"></div>
-        <span>Loading today's digest…</span>
+        <span id="loading-msg">Loading today's digest…</span>
       </div>
 
       <!-- Main content hidden until data arrives -->
@@ -563,6 +653,41 @@
         community: "Community",
         not_local: "Not local news",
       };
+
+      // ── Explainability (Generic): how the model classifies each section ──
+      const SECTION_DESCRIPTIONS = {
+        risks_alerts: "The model flags stories here when it detects safety hazards, service disruptions, weather advisories, or public health concerns — scored above its urgency threshold.",
+        civics_politics: "Stories are placed here when the model finds local government activity, policy changes, elected officials, or civic participation — scored above 0.5 on a local relevance scale.",
+        opportunities_welfare: "The model routes stories here when it identifies job openings, financial benefits, grants, housing assistance, or social services available to New Yorkers.",
+        community: "Stories land here when the model detects neighborhood events, local culture, community organizations, or development projects affecting New York City residents.",
+      };
+
+      // ── Mitigating Latency: rotating loading messages ──
+      const LOADING_MESSAGES = [
+        "Loading today's digest…",
+        "Scanning local news sources…",
+        "Classifying stories into sections…",
+        "Ranking by local relevance…",
+        "Almost ready…",
+      ];
+      let loadingMsgIdx = 0;
+      let loadingMsgTimer = null;
+
+      function startLoadingMessages() {
+        const el = document.getElementById("loading-msg");
+        loadingMsgTimer = setInterval(() => {
+          el.classList.add("fade");
+          setTimeout(() => {
+            loadingMsgIdx = (loadingMsgIdx + 1) % LOADING_MESSAGES.length;
+            el.textContent = LOADING_MESSAGES[loadingMsgIdx];
+            el.classList.remove("fade");
+          }, 300);
+        }, 1800);
+      }
+
+      function stopLoadingMessages() {
+        clearInterval(loadingMsgTimer);
+      }
 
       const elements = {
         loading: document.getElementById("loading"),
@@ -650,9 +775,37 @@
         card.className = "featured-card";
         card.dataset.sectionKey = sectionKey;
 
+        // ── Explainability (Generic): section header with model-criteria tooltip ──
         const heading = document.createElement("h3");
-        heading.textContent = section.title || sectionKey;
-        card.append(heading);
+        heading.className = "section-heading";
+
+        const titleSpan = document.createElement("span");
+        titleSpan.textContent = section.title || sectionKey;
+        heading.append(titleSpan);
+
+        const desc = SECTION_DESCRIPTIONS[sectionKey];
+        if (desc) {
+          const infoBtn = document.createElement("button");
+          infoBtn.className = "section-info-btn";
+          infoBtn.textContent = "i";
+          infoBtn.title = "How the model classifies stories here";
+          infoBtn.setAttribute("aria-expanded", "false");
+
+          const tooltip = document.createElement("div");
+          tooltip.className = "section-tooltip";
+          tooltip.textContent = desc;
+
+          infoBtn.addEventListener("click", e => {
+            e.stopPropagation();
+            const visible = tooltip.classList.toggle("visible");
+            infoBtn.setAttribute("aria-expanded", visible ? "true" : "false");
+          });
+
+          heading.append(infoBtn);
+          card.append(heading, tooltip);
+        } else {
+          card.append(heading);
+        }
 
         const body = document.createElement("div");
         body.className = "featured-body";
@@ -677,9 +830,13 @@
             link.rel = "noopener";
             link.textContent = story.title;
 
+            // ── Explainability (Specific): label the model's per-story reasoning ──
             const why = document.createElement("span");
             why.className = "story-why";
-            why.textContent = story.why_it_matters;
+            const whyLabel = document.createElement("span");
+            whyLabel.className = "story-why-label";
+            whyLabel.textContent = "Model reasoning: ";
+            why.append(whyLabel, story.why_it_matters || "");
 
             const meta = document.createElement("span");
             meta.className = "story-meta";
@@ -704,6 +861,7 @@
             const fbLabel = document.createElement("span");
             fbLabel.className = "feedback-label";
             fbLabel.textContent = "Relevant?";
+            fbLabel.title = "Your votes create ground-truth labels that help retrain the model";
 
             const btnUp = document.createElement("button");
             btnUp.className = "fb-btn";
@@ -767,7 +925,7 @@
             } else {
               const trigger = document.createElement("button");
               trigger.className = "flag-trigger";
-              trigger.textContent = "Wrong section?";
+              trigger.textContent = "Misclassified?";
               trigger.addEventListener("click", e => {
                 e.stopPropagation();
                 document.querySelectorAll(".flag-wrap.open").forEach(w => {
@@ -782,7 +940,7 @@
 
               const dropLabel = document.createElement("div");
               dropLabel.className = "flag-dropdown-label";
-              dropLabel.textContent = "Move to section:";
+              dropLabel.textContent = "Correct section:";
               dropdown.append(dropLabel);
 
               Object.entries(SECTION_LABELS)
@@ -886,19 +1044,24 @@
 
       function renderSections(sections, order) {
         elements.sectionsGrid.replaceChildren();
+        let cardIdx = 0;
+
+        function appendCard(card) {
+          if (!card) return;
+          // Staggered reveal: each card animates in slightly after the previous
+          card.style.animationDelay = `${cardIdx * 0.08}s`;
+          cardIdx++;
+          elements.sectionsGrid.append(card);
+        }
 
         Object.entries(PINNED_SECTIONS).forEach(([key, config]) => {
           const section = sections[key] || { title: config.label, items: [] };
-          const card = renderSectionCard(key, section, config.empty);
-          if (card) elements.sectionsGrid.append(card);
+          appendCard(renderSectionCard(key, section, config.empty));
         });
 
         const pinned = Object.keys(PINNED_SECTIONS);
         const keys = (order || Object.keys(sections)).filter(k => !pinned.includes(k));
-        keys.forEach(key => {
-          const card = renderSectionCard(key, sections[key]);
-          if (card) elements.sectionsGrid.append(card);
-        });
+        keys.forEach(key => appendCard(renderSectionCard(key, sections[key])));
       }
 
       // ── Data loading ──────────────────────────────────────────────
@@ -910,8 +1073,10 @@
       }
 
       async function initialisePage() {
+        startLoadingMessages();
         try {
           const data = await loadDigest();
+          stopLoadingMessages();
 
           elements.place.textContent = data.place || "New York NY";
           elements.updated.textContent = formatGeneratedAt(data.generated_at_utc);
@@ -928,6 +1093,7 @@
           elements.loading.hidden = true;
           elements.content.hidden = false;
         } catch (error) {
+          stopLoadingMessages();
           console.error("Failed to load data:", error);
           elements.loading.hidden = true;
           elements.content.hidden = false;
