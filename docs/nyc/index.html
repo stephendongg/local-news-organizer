@@ -260,13 +260,6 @@
         color: var(--foreground);
       }
 
-      /* ── Explainability (Specific): model reasoning label ── */
-      .story-why-label {
-        font-size: 11px;
-        font-weight: 400;
-        color: var(--muted);
-        margin-right: 2px;
-      }
 
       .story-meta {
         display: flex;
@@ -784,13 +777,9 @@
             link.rel = "noopener";
             link.textContent = story.title;
 
-            // ── Explainability (Specific): label the model's per-story reasoning ──
             const why = document.createElement("span");
             why.className = "story-why";
-            const whyLabel = document.createElement("span");
-            whyLabel.className = "story-why-label";
-            whyLabel.textContent = "Why it matters: ";
-            why.append(whyLabel, story.why_it_matters || "");
+            why.textContent = story.why_it_matters || "";
 
             const meta = document.createElement("span");
             meta.className = "story-meta";
