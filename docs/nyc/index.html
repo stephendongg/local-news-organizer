@@ -262,12 +262,10 @@
 
       /* ── Explainability (Specific): model reasoning label ── */
       .story-why-label {
-        font-size: 10px;
-        font-weight: 600;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--accent);
-        margin-right: 4px;
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--muted);
+        margin-right: 2px;
       }
 
       .story-meta {
@@ -791,7 +789,7 @@
             why.className = "story-why";
             const whyLabel = document.createElement("span");
             whyLabel.className = "story-why-label";
-            whyLabel.textContent = "Model reasoning: ";
+            whyLabel.textContent = "Why it matters: ";
             why.append(whyLabel, story.why_it_matters || "");
 
             const meta = document.createElement("span");
