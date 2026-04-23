@@ -103,7 +103,7 @@
         outline-offset: 3px;
       }
 
-      /* ── Principle 1: Mitigating Latency — loading spinner ── */
+      /* ── Principle 1: Mitigating Latency — loading spinner + rotating tips ── */
       #loading {
         display: flex;
         flex-direction: column;
@@ -127,6 +127,7 @@
       @keyframes spin {
         to { transform: rotate(360deg); }
       }
+
 
       /* Daily fact */
       .daily-fact {
@@ -259,6 +260,7 @@
         color: var(--foreground);
       }
 
+
       .story-meta {
         display: flex;
         flex-wrap: wrap;
@@ -294,6 +296,7 @@
         letter-spacing: 0.04em;
         text-transform: uppercase;
         margin-right: 2px;
+        cursor: help;
       }
 
       .fb-btn {
@@ -363,7 +366,68 @@
         transform: translateX(-50%) translateY(0);
       }
 
-      /* ── Wrong section flagging — Optionality + Ground Truth Labels ── */
+      /* ── Explainability (Generic): section info button + tooltip ── */
+      .section-heading {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        font-size: 13px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .section-info-btn {
+        flex-shrink: 0;
+        background: none;
+        border: 1px solid #d5d7da;
+        border-radius: 50%;
+        width: 15px;
+        height: 15px;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        font-family: inherit;
+        transition: color 0.1s, border-color 0.1s;
+      }
+
+      .section-info-btn:hover,
+      .section-info-btn[aria-expanded="true"] {
+        color: var(--foreground);
+        border-color: var(--foreground);
+      }
+
+      .section-info-btn:focus-visible {
+        outline: 2px solid var(--accent2);
+        outline-offset: 2px;
+      }
+
+      .section-tooltip {
+        display: none;
+        font-size: 12px;
+        color: var(--muted);
+        background: #f8f9fa;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid var(--accent);
+        padding: 8px 10px;
+        margin-top: 6px;
+        line-height: 1.5;
+        font-weight: 400;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+
+      .section-tooltip.visible {
+        display: block;
+      }
+
+      /* ── Misclassified flagging — Optionality + Ground Truth Labels ── */
       .flag-wrap {
         position: relative;
         display: inline-block;
@@ -564,6 +628,14 @@
         not_local: "Not local news",
       };
 
+      // ── Explainability (Generic): actual criteria from update.py ──
+      const SECTION_DESCRIPTIONS = {
+        risks_alerts: "Only immediate ongoing threats: active emergencies, evacuation orders, major infrastructure failures, or severe weather. Stories must score ≥ 0.5 on the model's importance scale to appear here.",
+        civics_politics: "Government, city council, courts, budgets, elections, policy, union negotiations, and crime investigations. Stories must score ≥ 0.5 on the model's importance scale.",
+        opportunities_welfare: "Jobs, training programs, healthcare services, social programs, benefits, and community resources. Stories must score ≥ 0.4 on the model's importance scale.",
+        community: "Local events, culture, arts, entertainment, sports, and neighborhood human-interest news. Stories must score ≥ 0.4 on the model's importance scale.",
+      };
+
       const elements = {
         loading: document.getElementById("loading"),
         content: document.getElementById("content"),
@@ -650,9 +722,37 @@
         card.className = "featured-card";
         card.dataset.sectionKey = sectionKey;
 
+        // ── Explainability (Generic): section header with model-criteria tooltip ──
         const heading = document.createElement("h3");
-        heading.textContent = section.title || sectionKey;
-        card.append(heading);
+        heading.className = "section-heading";
+
+        const titleSpan = document.createElement("span");
+        titleSpan.textContent = section.title || sectionKey;
+        heading.append(titleSpan);
+
+        const desc = SECTION_DESCRIPTIONS[sectionKey];
+        if (desc) {
+          const infoBtn = document.createElement("button");
+          infoBtn.className = "section-info-btn";
+          infoBtn.textContent = "i";
+          infoBtn.title = "How the model classifies stories here";
+          infoBtn.setAttribute("aria-expanded", "false");
+
+          const tooltip = document.createElement("div");
+          tooltip.className = "section-tooltip";
+          tooltip.textContent = desc;
+
+          infoBtn.addEventListener("click", e => {
+            e.stopPropagation();
+            const visible = tooltip.classList.toggle("visible");
+            infoBtn.setAttribute("aria-expanded", visible ? "true" : "false");
+          });
+
+          heading.append(infoBtn);
+          card.append(heading, tooltip);
+        } else {
+          card.append(heading);
+        }
 
         const body = document.createElement("div");
         body.className = "featured-body";
@@ -679,7 +779,7 @@
 
             const why = document.createElement("span");
             why.className = "story-why";
-            why.textContent = story.why_it_matters;
+            why.textContent = story.why_it_matters || "";
 
             const meta = document.createElement("span");
             meta.className = "story-meta";
@@ -703,20 +803,21 @@
 
             const fbLabel = document.createElement("span");
             fbLabel.className = "feedback-label";
-            fbLabel.textContent = "Relevant?";
+            fbLabel.textContent = "NYC news?";
+            fbLabel.title = "Is this genuinely local New York City news?";
 
             const btnUp = document.createElement("button");
             btnUp.className = "fb-btn";
             btnUp.dataset.sid = sid;
             btnUp.dataset.val = "up";
-            btnUp.title = "Relevant";
+            btnUp.title = "Yes, this is NYC news";
             btnUp.textContent = "▲";
 
             const btnDown = document.createElement("button");
             btnDown.className = "fb-btn";
             btnDown.dataset.sid = sid;
             btnDown.dataset.val = "down";
-            btnDown.title = "Not relevant";
+            btnDown.title = "No, this isn't NYC news";
             btnDown.textContent = "▼";
 
             // Restore saved state
@@ -739,7 +840,7 @@
                 otherBtn.classList.remove(otherClass);
               }
               saveFeedback(fb);
-              showToast(val === "up" ? "Marked as relevant ✓" : "Marked as not relevant ✓");
+              showToast(val === "up" ? "Flagged as NYC news ✓" : "Flagged as not NYC news ✓");
             }
 
             btnUp.addEventListener("click", () =>
@@ -767,7 +868,7 @@
             } else {
               const trigger = document.createElement("button");
               trigger.className = "flag-trigger";
-              trigger.textContent = "Wrong section?";
+              trigger.textContent = "Misclassified?";
               trigger.addEventListener("click", e => {
                 e.stopPropagation();
                 document.querySelectorAll(".flag-wrap.open").forEach(w => {
@@ -782,7 +883,7 @@
 
               const dropLabel = document.createElement("div");
               dropLabel.className = "flag-dropdown-label";
-              dropLabel.textContent = "Move to section:";
+              dropLabel.textContent = "Correct section:";
               dropdown.append(dropLabel);
 
               Object.entries(SECTION_LABELS)
@@ -887,18 +988,19 @@
       function renderSections(sections, order) {
         elements.sectionsGrid.replaceChildren();
 
+        function appendCard(card) {
+          if (!card) return;
+          elements.sectionsGrid.append(card);
+        }
+
         Object.entries(PINNED_SECTIONS).forEach(([key, config]) => {
           const section = sections[key] || { title: config.label, items: [] };
-          const card = renderSectionCard(key, section, config.empty);
-          if (card) elements.sectionsGrid.append(card);
+          appendCard(renderSectionCard(key, section, config.empty));
         });
 
         const pinned = Object.keys(PINNED_SECTIONS);
         const keys = (order || Object.keys(sections)).filter(k => !pinned.includes(k));
-        keys.forEach(key => {
-          const card = renderSectionCard(key, sections[key]);
-          if (card) elements.sectionsGrid.append(card);
-        });
+        keys.forEach(key => appendCard(renderSectionCard(key, sections[key])));
       }
 
       // ── Data loading ──────────────────────────────────────────────
